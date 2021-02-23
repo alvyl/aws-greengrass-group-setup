@@ -24,7 +24,8 @@
     "func_def": {
         "id": "",
       "version_arn": "",
-      "environment_variables": {}
+      "environment_variables": {},
+      "pinned": false
     },
   "group": {
     "id": "",
@@ -37,7 +38,7 @@
             "arn": "arn:aws:lambda:us-west-2:<account_id>:function:MockDevice:<alias>",
             "arn_qualifier": "<alias>",
             "environment_variables": {
-               "<name>": "<value>",
+               "<name>": "<value>"
             }
         }
     },
