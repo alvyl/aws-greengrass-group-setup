@@ -73,7 +73,8 @@ Lambda function(s)
                 "arn_qualifier": "<alias>"
                 "environment_variables": {
                   "<name>": "<value>",
-                }
+                },
+                "pinned": <boolean>
               }
             },
             ```
@@ -88,7 +89,8 @@ Lambda function(s)
                 "arn_qualifier": "dev"
                 "environment_variables": {
                   "SAY_HELLO_TO": "Miss. Mocking Bird",
-                }
+                },
+                "pinned": <boolean>
               }
             },
             ```
@@ -103,7 +105,8 @@ Lambda function(s)
                     "arn_qualifier": "dev"
                     "environment_variables": {
                       "SAY_HELLO_TO": "Miss. Mocking Bird",
-                    }
+                    },
+                    "pinned": <boolean>
                   },
                   "MockDeviceLambda": {
                     "arn": "arn:aws:lambda:us-west-2:<account_id>:function:MockDeviceLambda:dev",
@@ -111,7 +114,8 @@ Lambda function(s)
                     "environment_variables": {
                       "SAY_GOODBYE_TO": "Mr. Sleepy Owl",
                       "SAY_GOODBYE_AT": "8:00 PM",
-                    }
+                    },
+                    "pinned": <boolean>
                   }
                 },
                 ```
