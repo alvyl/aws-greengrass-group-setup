@@ -251,7 +251,9 @@ class GroupCommands(object):
                 )
 
                 # add environment variables to lambda function definition
-                environment_variables =  config['lambda_functions'][lambda_name]['environment_variables']
+                environment_variables = config['lambda_functions'][lambda_name]['environment_variables']
+                # add pinned to lambda function definition
+                pinned = config['lambda_functions'][lambda_name]['pinned']
                 logging.info('function {0}, adding environment variables: {1}'.format(
                     lambda_name, json.dumps(environment_variables)
                 ))
@@ -263,7 +265,8 @@ class GroupCommands(object):
                 latest_funcs[lambda_name] = {
                     "arn": alias_arn,
                     "arn_qualifier": q,
-                    "environment_variables": environment_variables
+                    "environment_variables": environment_variables,
+                    "pinned": pinned
                 }
 
                 func_definition.append({
@@ -280,6 +283,7 @@ class GroupCommands(object):
                                 }
                     },
                          },
+                        "Pinned": pinned,
                         "Executable": f['Configuration']['Handler'],
                         "Timeout": int(f['Configuration']['Timeout']),
                         "Pinned": True
@@ -306,7 +310,7 @@ class GroupCommands(object):
             config['lambda_functions'] = latest_funcs
             ll_arn = lmbv['Arn']
             logging.info("Created Function definition ARN:{0}".format(ll_arn))
-            config['func_def'] = {'id': ll['Id'], 'version_arn': ll_arn, 'environment_variables': environment_variables}
+            config['func_def'] = {'id': ll['Id'], 'version_arn': ll_arn, 'environment_variables': environment_variables, 'pinned': pinned}
             return ll_arn
         else:
             return

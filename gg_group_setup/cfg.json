@@ -24,7 +24,8 @@
     "func_def": {
         "id": "",
       "version_arn": "",
-      "environment_variables": {}
+      "environment_variables": {},
+      "pinned": false
     },
   "group": {
     "id": "",
