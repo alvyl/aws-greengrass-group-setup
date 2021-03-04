@@ -165,6 +165,7 @@ class GroupCommands(object):
             group_args['LoggerDefinitionVersionArn'] = log_arn
         if sub_arn:
             group_args['SubscriptionDefinitionVersionArn'] = sub_arn
+
         grp = gg_client.create_group_version(
             **group_args
         )
@@ -269,6 +270,7 @@ class GroupCommands(object):
                     "pinned": pinned
                 }
 
+                # Cannot specify memory size when running in IsolationMode: NoContainer
                 func_definition.append({
                     "Id": "{0}".format(lambda_name.lower()),
                     "FunctionArn": alias_arn,
@@ -278,8 +280,8 @@ class GroupCommands(object):
                          },
                         "Pinned": pinned,
                         "Executable": f['Configuration']['Handler'],
-                        "MemorySize":
-                            int(f['Configuration']['MemorySize']) * 1000,
+                        # "MemorySize":
+                        #     int(f['Configuration']['MemorySize']) * 1000,
                         "Timeout": int(f['Configuration']['Timeout'])
                     }
                 })  # function definition
@@ -287,11 +289,24 @@ class GroupCommands(object):
                 logging.error(e)
 
         # if we found one or more configured functions, create a func definition
+        # Since Ubuntu Core uses snap and GGC for snap subsystem, supports
+        # only noncontainerized lambda functions and must be run with uid/gid 584788
+        # Refer the section Run AWS IoT Greengrass in a snap > Deploying a Lambda function > Step 4e
+        # https://docs.aws.amazon.com/greengrass/v1/developerguide/install-ggc.html
         if len(func_definition) > 0:
             ll = gg_client.create_function_definition(
                 Name="{0}_func_def".format(group_type.type_name)
             )
             lmbv = gg_client.create_function_definition_version(
+                DefaultConfig={
+                  'Execution': {
+                      'IsolationMode': 'NoContainer',
+                      'RunAs': {
+                          'Gid': 584788,
+                          'Uid': 584788
+                      }
+                  }
+                },
                 FunctionDefinitionId=ll['Id'],
                 Functions=func_definition
             )
