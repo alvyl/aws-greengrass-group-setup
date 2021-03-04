@@ -269,19 +269,13 @@ class GroupCommands(object):
                     "pinned": pinned
                 }
 
+                # Cannot specify memory size when running in IsolationMode: NoContainer
                 func_definition.append({
                     "Id": "{0}".format(lambda_name.lower()),
                     "FunctionArn": alias_arn,
                     "FunctionConfiguration": {
                         "Environment": {
-                            "Variables": environment_variables,
-                            'Execution': {
-                                'IsolationMode': 'NoContainer',
-                                'RunAs': {
-                                    'Gid': 0,
-                                    'Uid': 0
-                                }
-                    },
+                            "Variables": environment_variables
                          },
                         "Pinned": pinned,
                         "Executable": f['Configuration']['Handler'],
@@ -293,18 +287,26 @@ class GroupCommands(object):
                 logging.error(e)
 
         # if we found one or more configured functions, create a func definition
+        # Since Ubuntu Core uses snap and GGC for snap subsystem, supports
+        # only noncontainerized lambda functions and must be run with uid/gid 584788
+        # Refer the section Run AWS IoT Greengrass in a snap > Deploying a Lambda function > Step 4e
+        # https://docs.aws.amazon.com/greengrass/v1/developerguide/install-ggc.html
         if len(func_definition) > 0:
             ll = gg_client.create_function_definition(
                 Name="{0}_func_def".format(group_type.type_name)
             )
             lmbv = gg_client.create_function_definition_version(
-                FunctionDefinitionId=ll['Id'],
-                Functions=func_definition,
                 DefaultConfig={
-                'Execution': {
-                    'IsolationMode': 'NoContainer'
-                }
-                }
+                  'Execution': {
+                      'IsolationMode': 'NoContainer',
+                      'RunAs': {
+                          'Gid': 584788,
+                          'Uid': 584788
+                      }
+                  }
+                },
+                FunctionDefinitionId=ll['Id'],
+                Functions=func_definition
             )
             # update config with latest function versions
             config['lambda_functions'] = latest_funcs
@@ -832,7 +834,7 @@ class GroupCommands(object):
                         "iot:DeleteThingShadow",
                         "iot:UpdateThingShadow"
                     ],
-                    "Resource": ["*"]
+                    "Resource": [arn]
                 },
                 {
                     "Effect": "Allow",
