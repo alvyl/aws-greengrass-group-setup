@@ -329,6 +329,10 @@ class GroupType(object):
                 logging.warning(
                     "[create_and_attach_iam_role] {0}".format(
                         ce.response['Error']['Message']))
+            elif ce.response['Error']['Code'] == 'EntityAlreadyExistsException':
+                logging.warning(
+                    "[create_and_attach_iam_role] {0}".format(
+                        ce.response['Error']['Message']))
             else:
                 logging.error("[create_and_attach_iam_role] {0}".format(
                         ce.response['Error']['Message']))
