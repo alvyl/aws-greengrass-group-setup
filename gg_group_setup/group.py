@@ -16,6 +16,7 @@ import boto3
 import logging
 from boto3.session import Session
 from botocore.exceptions import ClientError
+import traceback
 
 logging.basicConfig(format='%(asctime)s|%(name)-8s|%(levelname)s: %(message)s',
                     level=logging.INFO)
@@ -293,48 +294,74 @@ class GroupType(object):
                 }
             ]
         }
+
+        # Flag that will help to decide if role has to be created
+        create_role = False
+
+        # Check if role exists and set the flag
         try:
             resp = iam.create_role(
                 RoleName=role_name,
                 AssumeRolePolicyDocument=json.dumps(assume_role_policy)
             )
+        except ClientError as ce:
+            logging.warning(traceback.print_exc())
+            if ce.response['Error']['Code'] == 'EntityAlreadyExistsException':
+                create_role = True
+                logging.warning(
+                    "[create_role] {0}".format(
+                        ce.response['Error']['Message']))
+            else:
+                logging.warning("[create_role] {0}".format(
+                    ce.response['Error']['Message']))
+
+        create_role = True
+        logging.info("TBD#####: ", create_role)
+
+        # if create_role:
+        try:
+            logging.info("Trying to attach role EEEEEEEEEEEEEEEEEE")
             logging.debug(
-                "[create_and_attach_iam_role] create_role {0}".format(resp))
+                "[attach_policy] create_role {0}".format(resp))
             resp = iam.attach_role_policy(
                 RoleName=role_name,
                 PolicyArn=aws_lambda_ro_access_arn
             )
             logging.debug(
-                "[create_and_attach_iam_role] attach_policy 1 {0}".format(resp))
+                "[attach_policy] attach_policy 1 {0}".format(resp))
             resp = iam.attach_role_policy(
                 RoleName=role_name,
                 PolicyArn=aws_iot_full_access_arn
             )
             logging.debug(
-                "[create_and_attach_iam_role] attach_policy 2 {0}".format(resp))
+                "[attach_policy] attach_policy 2 {0}".format(resp))
             resp = iam.put_role_policy(
                 RoleName=role_name,
                 PolicyName='g3s_inline_policy',
                 PolicyDocument=json.dumps(gg_inline_policy)
             )
+        except ClientError as ce:
+            traceback.print_exc()
+            logging.error("[attach_policy] {0}".format(
+                ce.response['Error']['Message']))
+
+        logging.info("DONE WITH ATTACH")
+
+        try:
             logging.debug(
-                "[create_and_attach_iam_role] put_policy {0}".format(resp))
+                "[put_policy] put_policy {0}".format(resp))
             role = iam_res.Role(role_name)
             gg_client.associate_service_role_to_account(RoleArn=role.arn)
             logging.info(
-                "[end] [create_and_attach_iam_role] attached service role")
-
+                "[end] [put_policy] attached service role")
         except ClientError as ce:
+            traceback.print_exc()
             if ce.response['Error']['Code'] == 'ResourceAlreadyExistsException':
                 logging.warning(
-                    "[create_and_attach_iam_role] {0}".format(
-                        ce.response['Error']['Message']))
-            elif ce.response['Error']['Code'] == 'EntityAlreadyExistsException':
-                logging.warning(
-                    "[create_and_attach_iam_role] {0}".format(
+                    "[put_policy] {0}".format(
                         ce.response['Error']['Message']))
             else:
-                logging.error("[create_and_attach_iam_role] {0}".format(
+                logging.error("[put_policy] {0}".format(
                         ce.response['Error']['Message']))
             # role already exists return nothing, assuming previous success
 
